@@ -20,7 +20,7 @@ const setupBillsInstance = (store = null) =>
     document,
     onNavigate,
     store,
-    localStorage: window.localStorage,
+    localStorage,
   });
 
 const mockStore = (data) => ({
