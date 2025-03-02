@@ -16,6 +16,8 @@ let onNavigate;
 
 describe("Given I am connected as an employee", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+
     jest.spyOn(mockStore, "bills").mockImplementation(() => ({
       list: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({}),
@@ -25,6 +27,8 @@ describe("Given I am connected as an employee", () => {
     onNavigate = (pathname) => {
       document.body.innerHTML = ROUTES({ pathname });
     }
+
+    console.error = jest.fn();
 
     Object.defineProperty(window, "localStorage", { value: localStorageMock });
     window.localStorage.setItem("user", JSON.stringify({
@@ -82,7 +86,6 @@ describe("Given I am connected as an employee", () => {
       jest.spyOn(mockStore, "bills").mockImplementation(() => ({
         create: jest.fn().mockRejectedValue(new Error("Upload failed")),
       }));
-      console.error = jest.fn();
       const file = new File(["test"], "test.jpg", { type: "image/jpg" });
 
       simulateFileUpload(file);
@@ -147,29 +150,28 @@ describe("Given I am connected as an employee", () => {
       fireEvent.submit(form);
       
       await waitFor(() => expect(mockStore.bills().update).toHaveBeenCalledWith(updateObject));
+      await waitFor(() => expect(document.body.innerHTML).toContain("Mes notes de frais"));
     });
 
     describe("When an error occurs on API", () => {
-      test("Then it should log an 404 error when API responds with 404", async () => {
+      test("Then it should log a 404 error when API responds with 404", async () => {
         jest.spyOn(mockStore, "bills").mockImplementation(() => ({
-          update: jest.fn().mockRejectedValue({ response: { status: 404 } }),
+          update: jest.fn().mockRejectedValue(new Error("Erreur 404")),
         }));
-        console.error = jest.fn();
   
         fireEvent.submit(form);
   
-        await waitFor(() => expect(console.error).toHaveBeenCalledWith({ response: { status: 404 } }));
+        await waitFor(() => expect(console.error).toHaveBeenCalledWith(new Error("Erreur 404")));
       });
   
-      test("Then it should log an 500 error when API responds with 500", async () => {
+      test("Then it should log a 500 error when API responds with 500", async () => {
         jest.spyOn(mockStore, "bills").mockImplementation(() => ({
-          update: jest.fn().mockRejectedValue({ response: { status: 500 } }),
+          update: jest.fn().mockRejectedValue(new Error("Erreur 500")),
         }));
-        console.error = jest.fn();
   
         fireEvent.submit(form);
   
-        await waitFor(() => expect(console.error).toHaveBeenCalledWith({ response: { status: 500 } }));
+        await waitFor(() => expect(console.error).toHaveBeenCalledWith(new Error("Erreur 500")));
       });
     });
   });

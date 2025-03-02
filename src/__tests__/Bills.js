@@ -19,11 +19,16 @@ let onNavigate;
 
 describe("Given I am connected as an employee", () => {
   beforeEach(() => {
+    jest.clearAllMocks();
+
     jest.spyOn(mockStore, "bills").mockImplementation(() => ({
       list: jest.fn().mockResolvedValue([]),
       create: jest.fn().mockResolvedValue({}),
       update: jest.fn().mockResolvedValue({}),
     }));
+
+    console.log = jest.fn();
+    console.error = jest.fn();
     
     onNavigate = jest.fn((pathname) => {
       document.body.innerHTML = ROUTES({ pathname });
@@ -32,7 +37,7 @@ describe("Given I am connected as an employee", () => {
     Object.defineProperty(window, "localStorage", { value: localStorageMock });
     window.localStorage.setItem("user", JSON.stringify({
       type: "Employee",
-      eamil: "test@test.com"
+      email: "test@test.com"
     }));
 
     const setupBillsInstance = () => new Bills({ document, onNavigate, store: mockStore, localStorage });
@@ -64,6 +69,12 @@ describe("Given I am connected as an employee", () => {
       expect(dates).toEqual(datesSorted);
     });
 
+    test("Then all bills should be displayed", () => {
+      const billLines = screen.getByTestId("tbody").children.length;
+
+      expect(billLines).toBe(bills.length);
+    });
+
     test("Then the 'New Bill' button should have a click event listener", () => {
       const buttonNewBill = screen.getByTestId("btn-new-bill");
 
@@ -73,7 +84,7 @@ describe("Given I am connected as an employee", () => {
       expect(screen.getByText("Envoyer une note de frais")).toBeTruthy();
     });
 
-    test("Then clicking on an eye icon should open a modal of the bill image", () => {
+    test("Then clicking on an eye icon should open a modal of the bill image", async () => {
       $.fn.modal = jest.fn(); // mock bootstrap modal
 
       const handleClickIconEyeSpy = jest.spyOn(billsInstance, "handleClickIconEye");
@@ -83,13 +94,14 @@ describe("Given I am connected as an employee", () => {
       fireEvent.click(iconsEye[0]);
 
       expect(handleClickIconEyeSpy).toHaveBeenCalledWith(iconsEye[0]);
+      const billProofContainer = screen.getByTestId("bill-proof-container");
+      await waitFor(() => expect(billProofContainer).toBeTruthy());
     });
   });
 
   // Integration test GET bills
   describe("When I am on Bills Page and I call getBills()", () => {
     test("Then it should return formatted bills", async () => {
-      console.log = jest.fn();
       jest.spyOn(mockStore, "bills").mockImplementation(() => ({
         list: jest.fn().mockResolvedValue(bills),
       }));
@@ -106,7 +118,6 @@ describe("Given I am connected as an employee", () => {
     });
 
     test("Then it should return unformatted date if formatDate throws an error", async () => {
-      console.log = jest.fn();
       const corruptedBills = [
         { id: "1", date: "invalid-date", status: "pending" },
       ];
@@ -133,6 +144,24 @@ describe("Given I am connected as an employee", () => {
       const result = await billsInstance.getBills();
 
       expect(result).toBeUndefined();
+    });
+  });
+
+  describe("When an error occurs on API", () => {
+    test("Then it should log a 404 error when API responds with 404", async () => {
+      jest.spyOn(mockStore, "bills").mockImplementation(() => ({
+        list: jest.fn().mockRejectedValue(new Error("Erreur 404")),
+      }));
+    
+      await expect(billsInstance.getBills()).rejects.toThrow("Erreur 404");
+    });
+  
+    test("Then it should log a 500 error when API responds with 500", async () => {
+      jest.spyOn(mockStore, "bills").mockImplementation(() => ({
+        list: jest.fn().mockRejectedValue(new Error("Erreur 500")),
+      }));
+    
+      await expect(billsInstance.getBills()).rejects.toThrow("Erreur 500");
     });
   });
 });
