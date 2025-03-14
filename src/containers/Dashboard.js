@@ -147,7 +147,7 @@ export default class {
 
     bills.forEach(bill => {
       // FIXED : Remove event listener to prevent multiple event listeners to be attached to the same bill
-      $(`#open-bill${bill.id}`).off('click');
+      $(`#open-bill${bill.id}`).off('click'); // off method added
       $(`#open-bill${bill.id}`).click((e) => this.handleEditTicket(e, bill, bills))
     })
 
