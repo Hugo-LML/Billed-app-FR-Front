@@ -119,8 +119,8 @@ describe("Given I am connected as an employee", () => {
         vat: "70",
         pct: 20,
         commentary: "Commentaire Test",
-        fileUrl: null,
-        fileName: null,
+        fileUrl: "https://mockurl.com/test.jpg",
+        fileName: "test.jpg",
         status: "pending",
       };
 
@@ -132,6 +132,9 @@ describe("Given I am connected as an employee", () => {
       screen.getByTestId("pct").value = inputValues.pct;
       screen.getByTestId("commentary").value = inputValues.commentary;
 
+      newBillInstance.fileUrl = inputValues.fileUrl;
+      newBillInstance.fileName = inputValues.fileName;
+
       const updateObject = {
         data: JSON.stringify({
           email: JSON.parse(window.localStorage.getItem("user")).email,
@@ -140,9 +143,6 @@ describe("Given I am connected as an employee", () => {
         selector: null
       };
 
-      // jest.spyOn(mockStore, "bills").mockImplementation(() => ({
-      //   update: jest.fn().mockResolvedValue(updateObject),
-      // }));
       mockStore.bills = jest.fn().mockReturnValue({
         update: jest.fn().mockResolvedValue(updateObject),
       });
