@@ -152,16 +152,22 @@ describe("Given I am connected as an employee", () => {
       jest.spyOn(mockStore, "bills").mockImplementation(() => ({
         list: jest.fn().mockRejectedValue(new Error("Erreur 404")),
       }));
-    
+
+      document.body.innerHTML = BillsUI({ loading: false, error: "Erreur 404" });
+      
       await expect(billsInstance.getBills()).rejects.toThrow("Erreur 404");
+      expect(screen.getByText("Erreur 404")).toBeTruthy();
     });
-  
+    
     test("Then it should log a 500 error when API responds with 500", async () => {
       jest.spyOn(mockStore, "bills").mockImplementation(() => ({
         list: jest.fn().mockRejectedValue(new Error("Erreur 500")),
       }));
-    
+
+      document.body.innerHTML = BillsUI({ loading: false, error: "Erreur 500" });
+      
       await expect(billsInstance.getBills()).rejects.toThrow("Erreur 500");
+      expect(screen.getByText("Erreur 500")).toBeTruthy();
     });
   });
 });
